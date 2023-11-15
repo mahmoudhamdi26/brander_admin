@@ -1,87 +1,136 @@
 <template>
-  <q-page>
-  <div class="q-pa-md" style="max-width: 400px">
+  <q-page class="flex flex-center">
+    <q-form class="q-px-sm q-pt-md q-pb-md" @submit="onSubmit">
+      <q-card square class="shadow-24" style="width: 400px;">
+        <q-card-section class="bg-deep-purple-7">
+          <h4 class="text-h5 text-white q-my-xs">{{ $t('pages.login.title') }}</h4>
+        </q-card-section>
+        <q-card-section>
 
-    <q-form
-      @submit="onSubmit"
-      @reset="onReset"
-      class="q-gutter-md"
-    >
-      <q-input
-        filled
-        v-model="name"
-        label="Your name *"
-        hint="Name and surname"
-        lazy-rules
-        :rules="[ val => val && val.length > 0 || 'Please type something']"
-      />
-
-      <q-input
-        filled
-        type="number"
-        v-model="age"
-        label="Your age *"
-        lazy-rules
-        :rules="[
-          val => val !== null && val !== '' || 'Please type your age',
-          val => val > 0 && val < 100 || 'Please type a real age'
-        ]"
-      />
-
-      <q-toggle v-model="accept" label="I accept the license and terms" />
-
-      <div>
-        <q-btn label="Submit" type="submit" color="primary"/>
-        <q-btn label="Reset" type="reset" color="primary" flat class="q-ml-sm" />
-      </div>
+          <q-input class="q-mb-sm" square clearable v-model="username" type="text" :label="$t('Username')"
+            :rules="[val => (val && val.length > 2) || $t('forms.validations.invalid_username')]">
+            <template v-slot:prepend>
+              <q-icon name="person" />
+            </template>
+          </q-input>
+          <!-- <q-input
+              class="q-mb-md"
+              square
+              clearable
+              v-model="password"
+              type="password"
+              :label="$t('forms.inputs.password')"
+              :rules="[
+                    val => !!val || 'Please enter a password',
+                    val => val.length >= 8 || 'Password must be at least 8 characters long',
+                    val => /[A-Z]/.test(val) || 'Password must contain at least one uppercase letter',
+                    val => /[a-z]/.test(val) || 'Password must contain at least one lowercase letter',
+                    val => /\d/.test(val) || 'Password must contain at least one number',
+                    val => /[!@#$%^&*]/.test(val) || 'Password must contain at least one special character'
+                  ]"
+            >
+              <template v-slot:prepend>
+                <q-icon name="lock" />
+              </template>
+            </q-input>
+          :rules="[
+                  val => {
+                    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/
+                    return (val && regex.test(val)) || 'Please enter a strong password'
+                  }
+              ]"
+          -->
+          <q-input class="q-mb-md" square clearable v-model="password" type="password"
+            :label="$t('forms.inputs.password')">
+            <template v-slot:prepend>
+              <q-icon name="lock" />
+            </template>
+          </q-input>
+          <q-checkbox v-model="rememberMe" :label="$t('Remember me')" />
+        </q-card-section>
+        <q-card-actions class="q-px-lg">
+          <q-btn unelevated size="lg" color="purple-4" class="full-width text-white" :label="$t('Sign In')"
+            type="submit" />
+        </q-card-actions>
+        <q-card-section class="text-center q-pa-sm">
+          <p class="text-grey-6">{{ $t("Don't have an account?") }}</p>
+          <q-btn flat color="purple-4" :label="$t('Sign Up')" @click="goToSignUp" />
+        </q-card-section>
+      </q-card>
     </q-form>
-
-  </div>
-</q-page>
+  </q-page>
 </template>
 
 <script>
-import { useQuasar } from 'quasar'
-import { ref } from 'vue'
+import { useAuthStore } from 'stores/auth'
+import { api } from 'boot/axios'
+import { Loading, Notify, QSpinnerFacebook } from 'quasar'
+
+const authStore = useAuthStore();
 
 export default {
-  setup () {
-    const $q = useQuasar()
-
-    const name = ref(null)
-    const age = ref(null)
-    const accept = ref(false)
-
+  data() {
     return {
-      name,
-      age,
-      accept,
+      username: "",
+      password: "",
+      rememberMe: false,
+    };
+  },
 
-      onSubmit () {
-        if (accept.value !== true) {
-          $q.notify({
-            color: 'red-5',
-            textColor: 'white',
-            icon: 'warning',
-            message: 'You need to accept the license and terms first'
-          })
-        }
-        else {
-          $q.notify({
-            color: 'green-4',
-            textColor: 'white',
-            icon: 'cloud_done',
-            message: 'Submitted'
-          })
-        }
-      },
+  methods: {
+    async onSubmit() {
+      // write your logic to handle the login functionality
+      console.log("Form submitted");
+      this.login();
+    },
+    goToSignUp() {
+      // write your logic to navigate to the sign up page
+      console.log("Go to sign up");
+      this.$router.push('register')
+    },
 
-      onReset () {
-        name.value = null
-        age.value = null
-        accept.value = false
-      }
+    async login() {
+      this.$q.loading.show({
+        spinner: QSpinnerFacebook,
+        spinnerColor: 'yellow',
+        spinnerSize: 140,
+        backgroundColor: 'black',
+        message: 'Some important process  is in progress. Hang on...',
+        messageColor: 'white',
+        // boxClass: 'bg-grey-2 text-grey-9',
+      })
+
+      let vm = this;
+      api.post('/auth/login', {
+        username: this.username,
+        password: this.password
+      }).then(function (result) {
+        let response = result.data;
+        console.log(response);
+        if (response.status != 1) {
+          return;
+        }
+
+        var data = response.data;
+        console.log(data);
+        authStore.login(data.token, data.user);
+        api.defaults.headers.common['Authorization'] = 'Bearer ' + data.token
+        vm.$router.push({ name: "Home" });
+
+      }).catch(function (error) {
+        console.log(error);
+        Notify.create({
+          position: "top-right",
+          type: 'negative',
+          message: 'Invalid Login',
+          progress: true,
+          multiLine: true,
+          classes: "col-12"
+        });
+      }).finally(() => {
+        this.$q.loading.hide();
+      });
     }
-  }
-}
+  },
+};
 </script>

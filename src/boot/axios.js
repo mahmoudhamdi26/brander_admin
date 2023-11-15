@@ -1,13 +1,22 @@
 import { boot } from 'quasar/wrappers'
 import axios from 'axios'
 
-// Be careful when using SSR for cross-request state pollution
-// due to creating a Singleton instance here;
-// If any client changes this (global) instance, it might be a
-// good idea to move this instance creation inside of the
-// "export default () => {}" function below (which runs individually
-// for each client)
-const api = axios.create({ baseURL: 'http://localhost:8080' })
+// Create an axios instance
+const api = axios.create({ baseURL: 'http://localhost:8080/api/v1' })
+
+// Add a request interceptor
+api.interceptors.request.use(function (config) {
+  // Get the token from localStorage
+  const token = localStorage.getItem('token')
+  // Get the flag from the config
+  const useAuth = config.useAuth || false
+  // If the token exists and the flag is true, set the Authorization header
+  if (token && useAuth) {
+    console.log('Adding AUTH Header');
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
 
 export default boot(({ app }) => {
   // for use inside Vue files (Options API) through this.$axios and this.$api
