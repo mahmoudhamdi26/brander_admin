@@ -8,17 +8,18 @@
               <!-- <q-badge floating color="red">2</q-badge> -->
             </q-btn>
             <q-toolbar-title>
-              {{ $t('pages.users.title') }}
+              {{ title }}
             </q-toolbar-title>
-
-            <q-btn flat dense icon="add" :label="$t('actions.create')" @click="fixed = true" />
           </q-toolbar>
+
+          <h5 class="text-h5">{{ $t('common.templates') }}</h5>
+
           <q-table class="my-card full-width" :grid="$q.screen.xs" flat bordered :rows="rows" :columns="columns"
             row-key="id">
-            <template v-slot:body-cell-name="props">
+            <template v-slot:body-cell-fileid="props">
               <q-td :props="props">
-                <q-item clickable tag="a" :to="{ name: 'UserDetails', params: { id: props.row.id } }">
-                  {{ props.row.name }}
+                <q-item clickable tag="a" :to="{ name: 'UserTemplate', params: { id: props.row.id } }">
+                  {{ props.row.id }}
                 </q-item>
               </q-td>
             </template>
@@ -29,26 +30,9 @@
               </q-td>
             </template>
           </q-table>
+
         </q-card-section>
       </q-card>
-
-      <q-dialog v-model="fixed">
-        <q-card style="width: 80vh">
-          <q-card-section>
-            <div class="text-h6">{{ $t('forms.titles.create_user') }}</div>
-          </q-card-section>
-
-          <q-separator />
-
-          <q-card-section class="scroll">
-            <div class="row">
-              <div class="col">
-                <user-form :edit_id="selectedRow" />
-              </div>
-            </div>
-          </q-card-section>
-        </q-card>
-      </q-dialog>
     </div>
   </q-page>
 </template>
@@ -56,24 +40,26 @@
 <script>
 import { api } from 'boot/axios'
 import { ref } from 'vue';
-import UserForm from "components/forms/UserForm.vue";
+
 const columns = [
   { name: 'id', label: '#', field: 'id' },
-  { name: 'name', label: 'Name', align: 'left', field: 'name' },
-  { name: 'desc', label: 'User Name', align: 'left', field: 'username' },
-  { name: 'desc', label: 'Main Role', align: 'left', field: 'role' },
+  { name: 'fileid', label: 'File ID', align: 'left', field: 'fileid' },
+  { name: 'title', label: 'Title', align: 'left', field: 'title' },
+  { name: 'filename', label: 'File Name', align: 'left', field: 'filename' },
+  { name: 'filesize', label: 'File Size', align: 'left', field: 'filesize' },
   { name: 'actions', label: 'Actions' },
   // filepath
 ]
 export default {
   created() {
-    this.getItems();
+    this.getItem();
   },
   data() {
     return {
       fixed: ref(false),
-      file: null,
       title: '',
+      user: null,
+      // templates
       rows: [],
       columns: columns,
       selectedRow: null,
@@ -81,13 +67,15 @@ export default {
     }
   },
   methods: {
-    getItems() {
-      api.get('/users', { useAuth: true })
+    getItem() {
+      api.get(`/users/${this.$route.params.id}`, { useAuth: true })
         .then(result => {
           console.log(result);
           let response = result.data
           if (response.status == 1) {
-            this.rows = response.data.items;
+            this.rows = response.data.templates;
+            this.user = response.data
+            this.title = this.user.username
             console.log(this.rows)
           }
         })
@@ -95,31 +83,6 @@ export default {
           console.log(error);
           this.$q.notify({ color: 'negative', message: 'Form submission failed' })
         })
-    },
-    // Add New
-    showAddPopup() {
-
-    },
-    onSubmit() {
-      const formData = new FormData()
-      formData.append('file', this.file)
-      formData.append('title', this.title)
-      api.post('/templates', formData, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      })
-        .then(response => {
-          this.$q.notify({ color: 'positive', message: 'Form submitted successfully' })
-        })
-        .catch(error => {
-          console.log(error);
-          this.$q.notify({ color: 'negative', message: 'Form submission failed' })
-        })
-    },
-    onReset() {
-      this.file = null
-      this.title = ''
     },
     onEdit(idx, row) {
       console.log(row);
@@ -137,8 +100,6 @@ export default {
         })
     }
   },
-  components: {
-    UserForm,
-  }
+  components: {}
 }
 </script>

@@ -1,58 +1,90 @@
-import { useAuthStore } from 'stores/auth'
+import { useAuthStore } from "stores/auth";
 
 const routes = [
   {
-    path: '/auth',
-    component: () => import('layouts/EmptyLayout.vue'),
+    path: "/auth",
+    component: () => import("layouts/EmptyLayout.vue"),
     children: [
-      { path: 'login', component: () => import('pages/auth/LoginPage.vue'), name: "Login" },
-      { path: 'register', component: () => import('pages/auth/RegisterPage.vue'), name: "Register" }
-    ]
+      {
+        path: "login",
+        component: () => import("pages/auth/LoginPage.vue"),
+        name: "Login",
+      },
+      {
+        path: "register",
+        component: () => import("pages/auth/RegisterPage.vue"),
+        name: "Register",
+      },
+    ],
   },
 
   {
-    path: '/',
-    component: () => import('layouts/MainLayout.vue'),
+    path: "/",
+    component: () => import("layouts/MainLayout.vue"),
     beforeEnter: (to, from, next) => {
       const isLoggedIn = useAuthStore().isLoggedIn();
-      if(isLoggedIn){
+      if (isLoggedIn) {
         next();
-      }else{
-        next('/auth/login');
+      } else {
+        next("/auth/login");
       }
     },
     children: [
       {
-        path: '', name: 'Home',
-        component: () => import('pages/IndexPage.vue'),
-        meta: { requiresAuth: true }
+        path: "",
+        name: "Home",
+        component: () => import("pages/IndexPage.vue"),
+        meta: { requiresAuth: true },
       },
       {
-        path: '/users',
+        path: "/users",
         children: [
-          {path: '', name: 'UsersIndex', component: () => import('pages/users/IndexPage.vue'), meta: { requiresAuth: true } },
-        ]
+          {
+            path: "",
+            name: "UsersIndex",
+            component: () => import("pages/users/IndexPage.vue"),
+            meta: { requiresAuth: true },
+          },
+          {
+            path: "/:id",
+            name: "UserDetails",
+            component: () => import("pages/users/UserDetails.vue"),
+            meta: { requiresAuth: true },
+          },
+          {
+            path: "/template/:id",
+            name: "UserTemplate",
+            component: () => import("pages/users/EditTemplate.vue"),
+            meta: { requiresAuth: true },
+          },
+        ],
       },
       {
-        path: '/templates',
+        path: "/templates",
         children: [
-          {path: '', name: 'TemplatesIndex', component: () => import('pages/templates/IndexTemplates.vue'), meta: { requiresAuth: true } },
-        ]
+          {
+            path: "",
+            name: "TemplatesIndex",
+            component: () => import("pages/templates/IndexTemplates.vue"),
+            meta: { requiresAuth: true },
+          },
+        ],
       },
-      {path: '/templates/add', name: 'AddTemplate', component: () => import('pages/templates/AddTemplatePage.vue'), meta: { requiresAuth: true } }
-    ]
+      {
+        path: "/templates/add",
+        name: "AddTemplate",
+        component: () => import("pages/templates/AddTemplatePage.vue"),
+        meta: { requiresAuth: true },
+      },
+    ],
   },
-
-
-
-
 
   // Always leave this as last one,
   // but you can also remove it
   {
-    path: '/:catchAll(.*)*',
-    component: () => import('pages/ErrorNotFound.vue')
-  }
-]
+    path: "/:catchAll(.*)*",
+    component: () => import("pages/ErrorNotFound.vue"),
+  },
+];
 
-export default routes
+export default routes;
